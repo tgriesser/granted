@@ -1,5 +1,6 @@
 require("mocha-as-promised")();
 
+var _ = require('lodash');
 var granted = require('../index');
 var chai = require("chai");
 var expect = chai.expect;
@@ -51,14 +52,20 @@ describe('granted', function() {
     it('takes a permission and a callback', function() {
       function fn(user) { return user.name === 'tester'; }
       obj.grant('accessible', fn);
-      expect(obj._permissions.accessible[0]).to.eql({handler: fn, ctx: obj, deny: false});
+      expect(obj.__granted.accessible[0]).to.eql({handler: fn, ctx: obj, deny: false});
     });
 
     it('takes a permission, constructor, and callback', function() {
       function fn(user) { return user.name === 'tester'; }
       obj.grant('accessible', User, fn);
-      expect(obj._permissions.accessible[0]).to.eql({handler: fn, ctor: User, ctx: obj, deny: false});
+      expect(obj.__granted.accessible[0]).to.eql({handler: fn, ctor: User, ctx: obj, deny: false});
     });
+
+    it('grants multiple permissions with an array', function() {
+      obj.grant(['post', 'put', 'del'], function() {});
+      expect(_.keys(obj.__granted)).to.have.length(3);
+    });
+
   });
 
   describe('ungrant / undeny', function() {
@@ -75,7 +82,7 @@ describe('granted', function() {
       obj.grant('item', User, function() {});
       obj.ungrant();
 
-      expect(obj._permissions.access).to.eql([]);
+      expect(obj.__granted.access).to.eql([]);
     });
 
     it('allows ungranting all by a Constructor', function() {
@@ -84,8 +91,50 @@ describe('granted', function() {
       obj.grant('item', User, function() {});
 
       obj.ungrant(null, User, null);
-      expect(obj._permissions.item.length).to.equal(0);
-      expect(obj._permissions.access.length).to.equal(1);
+      expect(obj.__granted.item.length).to.equal(0);
+      expect(obj.__granted.access.length).to.equal(1);
+    });
+
+    it('allows ungranting all by the function', function() {
+      var x = function() {};
+      obj.grant('access', x);
+      obj.grant('access', User, function() {});
+      obj.grant('item', User, x);
+
+      expect(obj.__granted.item.length).to.equal(1);
+      expect(obj.__granted.access.length).to.equal(2);
+      obj.ungrant(null, x);
+      expect(obj.__granted.item.length).to.equal(0);
+      expect(obj.__granted.access.length).to.equal(1);
+    });
+
+    it('allows ungranting by the function/Ctor combo', function() {
+      var x = function() {};
+      obj.grant('access', x);
+      obj.grant('access', User, x);
+      obj.grant('item', x);
+
+      expect(obj.__granted.item.length).to.equal(1);
+      expect(obj.__granted.access.length).to.equal(2);
+      obj.ungrant(null, User, x);
+      expect(obj.__granted.item.length).to.equal(1);
+      expect(obj.__granted.access.length).to.equal(1);
+    });
+
+    it('allows ungranting by the name/function/Ctor combo', function() {
+      var x = function() {};
+      obj.grant('access', x);
+      obj.grant('access', User, x);
+      obj.grant('item', x);
+
+      expect(obj.__granted.item.length).to.equal(1);
+      expect(obj.__granted.access.length).to.equal(2);
+      obj.ungrant('item', User, x);
+      expect(obj.__granted.item.length).to.equal(1);
+      expect(obj.__granted.access.length).to.equal(2);
+      obj.ungrant('access', User, x);
+      expect(obj.__granted.item.length).to.equal(1);
+      expect(obj.__granted.access.length).to.equal(1);
     });
 
     it('only ungrants granted things, and only undenys denied things', function() {
@@ -94,12 +143,12 @@ describe('granted', function() {
       obj.grant('one', User, function() {});
       obj.deny('one', User, function() {});
       obj.undeny(null, User);
-      expect(obj._permissions.one.length).to.equal(3);
+      expect(obj.__granted.one.length).to.equal(3);
       obj.undeny('one');
-      expect(obj._permissions.one.length).to.equal(2);
+      expect(obj.__granted.one.length).to.equal(2);
       obj.deny('one', function() {});
       obj.ungrant('one');
-      expect(obj._permissions.one.length).to.equal(1);
+      expect(obj.__granted.one.length).to.equal(1);
     });
 
   });
@@ -116,6 +165,12 @@ describe('granted', function() {
       admin = new Admin();
       granted(User);
       granted(Admin);
+    });
+
+    it('throws an invalid error when checking a non-granted object', function() {
+      return obj.can('access', {}).catch(function(e) {
+        expect(e).to.be.an.instanceOf(granted.Errors.Invalid);
+      });
     });
 
     it('checks whether an object can do something', function() {
@@ -148,6 +203,22 @@ describe('granted', function() {
         user.id = 1;
         return user.can('access', obj);
       }).thenThrow(thrower).catch(function() {});
+    });
+
+    it('has both a promise and callback api', function() {
+      obj.grant('access', User, true);
+      obj.deny('access', User, function(user) {
+        return user.id === 1;
+      });
+      return user.can('access', obj, function(err, resp) {
+        expect(err).to.equal(null);
+        expect(resp).to.equal(user);
+      }).then(function() {
+        user.id = 1;
+        return user.can('access', obj, function(err, resp) {
+          expect(err).to.be.an.instanceOf(granted.Errors.Denied);
+        }).catch(function() {});
+      });
     });
 
   });
