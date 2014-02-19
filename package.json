@@ -1,0 +1,26 @@
+{
+  "name": "granted",
+  "version": "0.0.0",
+  "description": "An object agnostic authorization layer for javascript",
+  "main": "index.js",
+  "scripts": {
+    "test": "mocha -b -R spec test/index.js"
+  },
+  "keywords": [
+    "authorization",
+    "permissions"
+  ],
+  "repository": "https://github.com/tgriesser/granted.git",
+  "author": "Tim Griesser",
+  "license": "MIT",
+  "dependencies": {
+    "bluebird": "~1.0.5",
+    "lodash": "~2.4.1",
+    "create-error": "~0.3.1"
+  },
+  "devDependencies": {
+    "mocha": "~1.17.1",
+    "mocha-as-promised": "~2.0.0",
+    "chai": "~1.9.0"
+  }
+}
