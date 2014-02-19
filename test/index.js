@@ -61,6 +61,49 @@ describe('granted', function() {
     });
   });
 
+  describe('ungrant / undeny', function() {
+    var User, obj;
+
+    beforeEach(function() {
+      User = function() { this.name = 'tester'; };
+      obj  = granted({});
+    });
+
+    it('allows ungranting all by a name', function() {
+      obj.grant('access', function() {});
+      obj.grant('access', User, function() {});
+      obj.grant('item', User, function() {});
+      obj.ungrant();
+
+      expect(obj._permissions.access).to.eql([]);
+    });
+
+    it('allows ungranting all by a Constructor', function() {
+      obj.grant('access', function() {});
+      obj.grant('access', User, function() {});
+      obj.grant('item', User, function() {});
+
+      obj.ungrant(null, User, null);
+      expect(obj._permissions.item.length).to.equal(0);
+      expect(obj._permissions.access.length).to.equal(1);
+    });
+
+    it('only ungrants granted things, and only undenys denied things', function() {
+      obj.grant('one', function() {});
+      obj.deny('one', function() {});
+      obj.grant('one', User, function() {});
+      obj.deny('one', User, function() {});
+      obj.undeny(null, User);
+      expect(obj._permissions.one.length).to.equal(3);
+      obj.undeny('one');
+      expect(obj._permissions.one.length).to.equal(2);
+      obj.deny('one', function() {});
+      obj.ungrant('one');
+      expect(obj._permissions.one.length).to.equal(1);
+    });
+
+  });
+
   describe('can', function() {
     var User, Admin, user, admin, obj, obj2;
 
