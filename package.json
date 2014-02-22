@@ -4,7 +4,7 @@
   "description": "An object agnostic authorization layer for javascript",
   "main": "index.js",
   "scripts": {
-    "test": "mocha -b -R spec test/index.js"
+    "test": "mocha --check-leaks -b -R spec test/index.js"
   },
   "keywords": [
     "authorization",

@@ -4,7 +4,7 @@ An object agnostic authorization layer for javascript. Features both a
 promise (recommended) and callback api for checking permissions.
 
 ```js
-account.grant('admin', User, function(user) {
+account.grants(User, 'admin', function(user) {
   return (user.role === 'admin' || this.owner_id === user.id)
 });
 
@@ -35,15 +35,15 @@ First, we would define the granted permissions on the `Account`:
 var doc = new Document({owner_id: 2, title: 'My Secret Account'});
 
 // Allow any "authenticated" user to read the document.
-doc.grant('read', User, function(user) {
+doc.grants(User, 'read', function(user) {
   return user.isAuthenticated();
 });
 
 // Allow SuperUsers to do anything to the document.
-doc.grant(['read', 'write', 'destroy'], SuperUser, true);
+doc.grants(SuperUser, ['read', 'write', 'destroy'], true);
 
 // Allow Users to do anything to the document if they're
-doc.grant(['read', 'write', 'destroy'], User, function(user) {
+doc.grants(User, ['read', 'write', 'destroy'], function(user) {
 
   // Check that the user's ID matches with the owner_id of the document
   return user.id === this.get('owner_id')
@@ -51,7 +51,7 @@ doc.grant(['read', 'write', 'destroy'], User, function(user) {
 
 // Allow anyone to read the metadata about an document, unless the
 // object contains an is_robot flag.
-doc.grant('readMeta', function(obj) {
+doc.grants('readMeta', function(obj) {
   return obj.is_robot !== true;
 });
 ```
@@ -92,13 +92,21 @@ visitor.can('write', doc, function(e, visitor) {
 ```
 
 ## API:
-- .can(name, [options]).then(...).catch(...)
-- .can(name, [options], callback)
 
-- .grant(name, [Target], handler)
-- .deny(name, [Target], handler)
-- .ungrant([name], [Target], [handler])
-- .undeny([name], [Target], [handler])
+### .grants([Target], name, predicate)
+Grants the permission specified by `name`, (or permissions, if `name` is an array)
+if the `predicate` returns true, resolves with a successful promise, or
+
+#### .can(name, [options]).then(...).catch(...)
+
+#### .can(name, [options], callback)
 
 
-## Basic Use:
+Grants
+
+
+- .deny([Target], name, predicate)
+
+- .ungrant([Target], [name], [predicate])
+
+- .undeny([Target], [name], [predicate])
