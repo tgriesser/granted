@@ -93,7 +93,7 @@ visitor.can('write', doc, function(e, visitor) {
 
 ## API:
 
-### .grants([Target], name, predicate)
+### .grants([Constructor | predicate], name, predicate)
 Grants the permission specified by `name`, (or permissions, if `name` is an array)
 if the `predicate` returns true, resolves with a successful promise, or
 
@@ -101,12 +101,8 @@ if the `predicate` returns true, resolves with a successful promise, or
 
 #### .can(name, [options], callback)
 
+#### .deny([Constructor | predicate], name, predicate)
 
-Grants
+#### .ungrant([Constructor | predicate], [name], [predicate])
 
-
-- .deny([Target], name, predicate)
-
-- .ungrant([Target], [name], [predicate])
-
-- .undeny([Target], [name], [predicate])
+#### .undeny([Constructor | predicate], [name], [predicate])

@@ -58,12 +58,27 @@ describe('granted', function() {
     it('takes a permission, constructor, and predicate', function() {
       function fn(user) { return user.name === 'tester'; }
       obj.grants(User, 'accessible', fn);
-      expect(obj.__granted.accessible[0]).to.eql({predicate: fn, ctor: User, ctx: obj, deny: false});
+      expect(obj.__granted.accessible[0]).to.eql({predicate: fn, first: User, ctx: obj, deny: false});
     });
 
     it('grants multiple permissions with an array', function() {
       obj.grants(['post', 'put', 'del'], function() {});
       expect(_.keys(obj.__granted)).to.have.length(3);
+    });
+
+    it('allows a simple predicate as the first argument', function() {
+      var file = granted({});
+      var obj  = granted({tableName: 'user'});
+      var obj2 = granted({tableName: 'acocunt'});
+      var matcher = function(obj) { return obj.tableName === 'user'; };
+      file.grants(matcher, 'write', function(matcher) {
+        return true;
+      });
+      return obj.can('write', file).then(function() {
+        return obj2.can('write', file);
+      }).catch(function(e) {
+        expect(e.message).to.equal('Granted not matched: write');
+      });
     });
 
   });
