@@ -1,5 +1,3 @@
-require("mocha-as-promised")();
-
 var _       = require('lodash');
 var granted = require('../index');
 var chai    = require("chai");
